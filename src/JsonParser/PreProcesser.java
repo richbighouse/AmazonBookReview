@@ -26,9 +26,7 @@ public class PreProcesser{
 		{
 			numLines ++;
 		}
-		return numLines;
-		
-		
+		return numLines;		
 	}
 	
 	public static int preProcessData() throws JsonSyntaxException, IOException
