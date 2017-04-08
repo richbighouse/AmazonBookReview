@@ -24,7 +24,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import com.google.gson.Gson;
 
 public class DistanceMeasurementMapper {
-	
+
 	public static Reviewer baseReviewer;
 
 	public static class AllPairsMapper extends Mapper<Object, Text, Text, Text> 
@@ -40,13 +40,13 @@ public class DistanceMeasurementMapper {
 	public static class AllPairsReducer extends Reducer<Text, Text, Text, DoubleWritable> 
 	{
 		private HashMap<Reviewer, Double> similarityMap = new HashMap<Reviewer, Double>();
-		
+
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 		{
 			Reviewer comparedReviewer = new Reviewer(key.toString());			
 			HashSet<String> allBooks = new HashSet<String>();//Set of all the combine books of the base Reviewer and compared Reviewer
 			allBooks.addAll(baseReviewer.ratings.keySet()); 
-			
+
 			String[] br = new String[2]; //temporary array to split books and ratings
 			double rating;
 			for(Text t : values)
@@ -58,70 +58,69 @@ public class DistanceMeasurementMapper {
 				allBooks.add(br[0]);
 			}
 			comparedReviewer.ratingMeans = comparedReviewer.ratingMeans/comparedReviewer.ratings.size();
-			
-			
-			
+
+
+
 			double similarity = Reviewer.calculateSimilarity(baseReviewer, comparedReviewer,allBooks);
 			similarityMap.put(comparedReviewer, similarity);			
 		}
-		
+
 		public void cleanup(Context context) throws IOException, InterruptedException
 		{
 			//Used to sort the HashMap by descending order
 			Comparator<Entry<Reviewer, Double>> valueComparator = new Comparator<Entry<Reviewer,Double>>() 
-			{ 
+					{ 
 				public int compare(Entry<Reviewer, Double> e1,Entry<Reviewer, Double> e2) 
 				{
 					double f1 = e1.getValue();
 					double f2 = e2.getValue();
-						
+
 					if(f1 < f2) return 1;
 					else if(f1 > f2) return -1;
 					else return 0;
 				}
-			};
-				
-			Set<Entry<Reviewer, Double>> entries = similarityMap.entrySet();
-			ArrayList<Entry<Reviewer, Double>> listOfEntries =  new ArrayList<Entry<Reviewer, Double>>(entries);
-			Collections.sort(listOfEntries, valueComparator);
-	
-			for(int i = 0; i < Reviewer.topXUser; i++)
-			{
-				Entry<Reviewer, Double> entry = listOfEntries.get(i);
-				String id = entry.getKey().id;
-				Double cosin = entry.getValue();
-				cosin = Math.round(cosin*10000d)/10000d;
-					
-				context.write(new Text(id), new DoubleWritable(cosin));
-			}
+					};
+
+					Set<Entry<Reviewer, Double>> entries = similarityMap.entrySet();
+					ArrayList<Entry<Reviewer, Double>> listOfEntries =  new ArrayList<Entry<Reviewer, Double>>(entries);
+					Collections.sort(listOfEntries, valueComparator);
+
+					for(int i = 0; i < Reviewer.topXUser; i++)
+					{
+						Entry<Reviewer, Double> entry = listOfEntries.get(i);
+						String id = entry.getKey().id;
+						Double cosin = entry.getValue();
+						cosin = Math.round(cosin*10000d)/10000d;
+
+						context.write(new Text(id), new DoubleWritable(cosin));
+					}
 		}
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
-
-		
+	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException 
+	{	
 		//Task: PEARSON, COSINE, JACCARD
 		Reviewer.Task task = Reviewer.Task.COSINE;
-		
+
 		//String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
 		//String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
 		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//Sample";
 		String 	fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
 		File outputFolder = new File(fileOutput.replace("file:/",""));
-		
+
 		if(outputFolder.exists())
 		{
 			FileUtils.deleteDirectory(outputFolder);
 		}	
-		
-				
+
+
 		Reviewer.DataPath = fileInput.substring(fileInput.indexOf("AmazonBookReview")+"AmazonBookReview//".length());//Used to find all the books of a given user
 		Reviewer.topXUser = 4;//Used in the cleanup to output the top X users	
 		baseReviewer = Reviewer.generateBaseReviewer("user1",task);//Creates our interested user
-		
+
 		Gson gson = new Gson();
 		String ReviewerSerialization = gson.toJson(baseReviewer); //Serialize to pass to Reduce jobs	
-		
+
 		Configuration conf = new Configuration();
 		conf.set("Reviewer", ReviewerSerialization);
 		Job job = Job.getInstance(conf, "Distance Similarity");
