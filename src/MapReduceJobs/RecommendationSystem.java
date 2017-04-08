@@ -15,8 +15,10 @@ import java.util.Map.Entry;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.join.TupleWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -30,6 +32,7 @@ public class RecommendationSystem {
 	
 	public static Reviewer baseReviewer;
 	public static HashMap<Reviewer, Double> topReviewers;
+	public static double totalSimilarity;
 	
 	public static class RecommendationMapper extends Mapper<Object, Text, Text, Text> 
 	{
@@ -37,51 +40,64 @@ public class RecommendationSystem {
 		{
 			String[] tokens = values.toString().split(",");
 			if(topReviewers.containsKey(tokens[0])){ //if userId is in topReviewers
-				context.write(new Text(tokens[0]), new Text(tokens[1] + "," + tokens[2])); //userId, <bookId, bookRating>
+				context.write(new Text(tokens[0]), new Text(tokens[1] + ";" + tokens[2])); //userId, <bookId, bookRating>
 			}
 			else if(baseReviewer.id.equals(tokens[0])){ 
 				baseReviewer.ratings.put(tokens[1], Double.valueOf(tokens[2]));
 			}
 		}
 	}
-	public static class RecommendationReducer extends Reducer<Text, Text, Text, FloatWritable> 
+	public static class RecommendationReducer extends Reducer<Text, Text, Text, DoubleWritable> 
 	{
-		HashMap<String, HashMap<Double, Double>> bookRatings = new HashMap<String, HashMap<Double, Double>>();
+		HashMap<String, ArrayList<Tuple<Double, Double>>> bookRatings = new HashMap<String, ArrayList<Tuple<Double, Double>>>();
 		//HashMap<bookId, HashMap<bookRating, similartiryRating>>
-		
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException {
 				Double similarity = topReviewers.get(key);
 				
 				for(Text value : values){
-					String[] tokens = values.toString().split(","); //0 = bookId, 1 = bookRating
+					String[] tokens = values.toString().split(";"); //0 = bookId, 1 = bookRating
 					if(!bookRatings.containsKey(tokens[0])){
-						bookRatings.put(tokens[0], new HashMap<Double, Double>());
+						bookRatings.put(tokens[0], new ArrayList<>());
 					}
-					bookRatings.get(tokens[0]).put(Double.valueOf(tokens[1]), similarity);
+					bookRatings.get(tokens[0]).add(new Tuple<Double,Double>(Double.parseDouble(tokens[1]), similarity));
 				}			
 		}
 		
 		public void cleanup(Context context) throws IOException, InterruptedException{
 			
+			double sum;
+			for(String book : bookRatings.keySet()){
+				sum = 0;
+				for(Tuple<Double, Double> ratings : bookRatings.get(book)){
+					sum += ratings.x * (ratings.y / totalSimilarity);
+				}
+				context.write(new Text(book), new DoubleWritable(sum));
+			}		
 		}
 	}
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//ALL-preprocessed";
-		String topNUsersInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output//part-r-00000";
+		String topNUsersInput = "/home//rich//dev//workspaces//java8//AmazonBookReview//Output//part-r-00000";
 		String fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//FinalOutput";
 		File outputFolder = new File("//home//rich//dev//workspaces//java8//AmazonBookReview//FinalOutput");
 				
 		if(outputFolder.exists())
 		{
 			FileUtils.deleteDirectory(outputFolder);
-		}		
+		}	
+		
 		File data = new File(topNUsersInput);
 		BufferedReader br = new BufferedReader(new FileReader(data));
-		String line;		
+		String line;
+		double temp;
+		topReviewers = new HashMap<Reviewer, Double>();
+		totalSimilarity = 0;
 		while((line = br.readLine()) != null){		
-			String[] tokens = line.split(",");
-			topReviewers.put(new Reviewer(tokens[0]), Double.valueOf(tokens[1]));
+			String[] tokens = line.split("\\t");
+			temp = Double.valueOf(tokens[1]);
+			topReviewers.put(new Reviewer(tokens[0]), temp);
+			totalSimilarity += temp;
 		}
 		
 		Gson gson = new Gson();

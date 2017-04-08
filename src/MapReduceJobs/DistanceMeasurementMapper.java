@@ -1,5 +1,6 @@
 package MapReduceJobs;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,12 +101,19 @@ public class DistanceMeasurementMapper {
 
 		
 		//Task: PEARSON, COSINE, JACCARD
-		Reviewer.Task task = Reviewer.Task.PEARSON;
+		Reviewer.Task task = Reviewer.Task.JACCARD;
 		
-		String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
-		String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
-		//String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//ALL-preprocessed";
-		//String 	fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
+		//String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
+		//String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
+		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//Sample";
+		String 	fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
+		File outputFolder = new File(fileOutput.replace("file:/",""));
+		
+		if(outputFolder.exists())
+		{
+			FileUtils.deleteDirectory(outputFolder);
+		}	
+		
 				
 		Reviewer.DataPath = fileInput.substring(fileInput.indexOf("AmazonBookReview")+"AmazonBookReview//".length());//Used to find all the books of a given user
 		Reviewer.topXUser = 4;//Used in the cleanup to output the top X users	

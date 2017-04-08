@@ -44,7 +44,6 @@ public class Reviewer
 			if(tokens[0].equals(reviewer.id))
 			{
 				reviewer.ratings.put(tokens[1], Double.parseDouble(tokens[2]));
-				System.out.println(tokens[1]);
 			}
 		}
 		reviewer.calculateRatingMean();
