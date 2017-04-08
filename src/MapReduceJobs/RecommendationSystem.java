@@ -24,15 +24,12 @@ import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import MapReduceJobs.JaccardSimilarityJobs.JaccardAllPairsMapper;
-import MapReduceJobs.JaccardSimilarityJobs.JaccardTop10Users;
-
 import com.google.gson.Gson;
 
 public class RecommendationSystem {
 	
 	public static Reviewer baseReviewer;
-	public static HashMap<Reviewer, Float> topReviewers;
+	public static HashMap<Reviewer, Double> topReviewers;
 	
 	public static class RecommendationMapper extends Mapper<Object, Text, Text, Text> 
 	{
@@ -43,22 +40,22 @@ public class RecommendationSystem {
 				context.write(new Text(tokens[0]), new Text(tokens[1] + "," + tokens[2])); //userId, <bookId, bookRating>
 			}
 			else if(baseReviewer.id.equals(tokens[0])){ 
-				baseReviewer.ratings.put(tokens[1], Float.valueOf(tokens[2]));
+				baseReviewer.ratings.put(tokens[1], Double.valueOf(tokens[2]));
 			}
 		}
 	}
 	public static class RecommendationReducer extends Reducer<Text, Text, Text, FloatWritable> 
 	{
-		HashMap<String, HashMap<Double, Float>> bookRatings = new HashMap<String, HashMap<Double, Float>>();
+		HashMap<String, HashMap<Double, Double>> bookRatings = new HashMap<String, HashMap<Double, Double>>();
 		//HashMap<bookId, HashMap<bookRating, similartiryRating>>
 		
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException {
-				Float similarity = topReviewers.get(key);
+				Double similarity = topReviewers.get(key);
 				
 				for(Text value : values){
 					String[] tokens = values.toString().split(","); //0 = bookId, 1 = bookRating
 					if(!bookRatings.containsKey(tokens[0])){
-						bookRatings.put(tokens[0], new HashMap<Double, Float>());
+						bookRatings.put(tokens[0], new HashMap<Double, Double>());
 					}
 					bookRatings.get(tokens[0]).put(Double.valueOf(tokens[1]), similarity);
 				}			
@@ -84,7 +81,7 @@ public class RecommendationSystem {
 		String line;		
 		while((line = br.readLine()) != null){		
 			String[] tokens = line.split(",");
-			topReviewers.put(new Reviewer(tokens[0]), Float.valueOf(tokens[1]));
+			topReviewers.put(new Reviewer(tokens[0]), Double.valueOf(tokens[1]));
 		}
 		
 		Gson gson = new Gson();
@@ -114,7 +111,7 @@ public class RecommendationSystem {
 		while((line = br.readLine()) != null){
 			String[] tokens = line.split(",");
 			if(tokens[0].equals(reviewer.id)){
-				reviewer.ratings.put(tokens[1], Float.parseFloat(tokens[2]));
+				reviewer.ratings.put(tokens[1], Double.parseDouble(tokens[2]));
 				System.out.println(tokens[1]);
 			}
 		}
