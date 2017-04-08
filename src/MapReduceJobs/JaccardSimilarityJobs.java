@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.FloatWritable;
@@ -103,18 +104,25 @@ public class JaccardSimilarityJobs {
 
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 		//String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//processedReview";
-		//String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
+		//String fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
+		//File outputFolder = new File("//home//epar//workspace//AmazonBookReview//Data//Output");
 
 		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//ALL-preprocessed";
 		String 	fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
+		File outputFolder = new File("//home//rich//dev//workspaces//java8//AmazonBookReview//Output");
+		
+		if(outputFolder.exists())
+		{
+			FileUtils.deleteDirectory(outputFolder);
+		}
 		
 		Gson gson = new Gson();
-		baseReviewer = generateBaseReviewer("A1VOONMRQZUBE4");
+		baseReviewer = generateBaseReviewer("A1ZG43T5D0TILP");
 		String reviewerSerialization = gson.toJson(baseReviewer); //Serialize to pass to Reduce jobs	
 		Configuration conf = new Configuration();
 		conf.set("reviewer", reviewerSerialization);
 		Job job = Job.getInstance(conf, "Jaccard Similarity");
-		job.setJarByClass(JaccardSimilarity.class);
+		job.setJarByClass(JaccardSimilarityJobs.class);
 		job.setMapperClass(JaccardAllPairsMapper.class);
 		job.setReducerClass(JaccardTop10Users.class);
 		job.setOutputKeyClass(Text.class);
