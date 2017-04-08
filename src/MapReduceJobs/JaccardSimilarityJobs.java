@@ -62,7 +62,6 @@ public class JaccardSimilarityJobs {
 			for(Text t : values){
 				String book = t.toString();
 				union.add(book);
-				comparedReviewer.ratings.put(book, (float) 1);
 				if(baseReviewer.ratings.keySet().contains(book)){
 					numerator++;
 				}
@@ -75,8 +74,7 @@ public class JaccardSimilarityJobs {
 		public void cleanup(Context context) throws IOException, InterruptedException{
 			
 			//Used to sort the HashMap by descending order
-			Comparator<Entry<Reviewer, Float>> valueComparator = new Comparator<Entry<Reviewer,Float>>() { 
-				
+			Comparator<Entry<Reviewer, Float>> valueComparator = new Comparator<Entry<Reviewer,Float>>() { 		
 				public int compare(Entry<Reviewer, Float> e1,Entry<Reviewer, Float> e2) {
 					float f1 = e1.getValue();
 					float f2 = e2.getValue();
@@ -91,8 +89,8 @@ public class JaccardSimilarityJobs {
 				ArrayList<Entry<Reviewer, Float>> listOfEntries =  new ArrayList<Entry<Reviewer, Float>>(entries);
 				Collections.sort(listOfEntries, valueComparator);
 	
-				int numberOfReviewersToConsider = 10; //change this value to the desired number of Reviewers to consider
-				for(int i = 0; i < listOfEntries.size(); i++){
+				int numberOfReviewersToConsider = 100; //change this value to the desired number of Reviewers to consider
+				for(int i = 0; i < numberOfReviewersToConsider; i++){
 					Entry<Reviewer, Float> entry = listOfEntries.get(i);
 					String id = entry.getKey().id;
 					Float jaccard = entry.getValue();

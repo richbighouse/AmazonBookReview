@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
@@ -116,14 +117,21 @@ public class CosineDistance {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
-		String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
-		String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
+		//String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
+		//String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
 
-		//String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//ALL-preprocessed";
-		//String 	fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
+		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//ALL-preprocessed";
+		String 	fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
+		File outputFolder = new File("//home//rich//dev//workspaces//java8//AmazonBookReview//Output");
+		
+		
+		if(outputFolder.exists())
+		{
+			FileUtils.deleteDirectory(outputFolder);
+		}
 		
 		Gson gson = new Gson();
-		baseReviewer = generateBaseReviewer("user1");
+		baseReviewer = generateBaseReviewer("A1ZG43T5D0TILP");
 		baseReviewer.calculateRatingMean();
 		
 		String ReviewerSerialization = gson.toJson(baseReviewer); //Serialize to pass to Reduce jobs	
@@ -144,7 +152,7 @@ public class CosineDistance {
 	public static Reviewer generateBaseReviewer(String id) throws IOException
 	{		
 		Reviewer Reviewer = new Reviewer(id);
-		File data = new File("Data/Sample");
+		File data = new File("Data/ALL-preprocessed");
 		BufferedReader br = new BufferedReader(new FileReader(data));
 		String line;
 		
