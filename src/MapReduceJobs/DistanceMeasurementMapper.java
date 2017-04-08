@@ -1,8 +1,5 @@
 package MapReduceJobs;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,11 +21,11 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.google.gson.Gson;
 
-public class CosineDistance {
+public class DistanceMeasurementMapper {
 	
 	public static Reviewer baseReviewer;
 
-	public static class CosineAllPairsMapper extends Mapper<Object, Text, Text, Text> 
+	public static class AllPairsMapper extends Mapper<Object, Text, Text, Text> 
 	{
 		public void map(Object key, Text values, Context context) throws IOException, InterruptedException 
 		{
@@ -38,49 +35,32 @@ public class CosineDistance {
 		}
 	}
 
-	public static class CosineTop10Users extends Reducer<Text, Text, Text, DoubleWritable> 
+	public static class AllPairsReducer extends Reducer<Text, Text, Text, DoubleWritable> 
 	{
-		private HashMap<Reviewer, Double> cosinSimilarityMap = new HashMap<Reviewer, Double>();
+		private HashMap<Reviewer, Double> similarityMap = new HashMap<Reviewer, Double>();
 		
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 		{
 			Reviewer comparedReviewer = new Reviewer(key.toString());			
-			String[] br = new String[2]; //temporary array to split books and ratings
-			HashMap<String,Double> comparedReviewer_bookAndRatings = new HashMap<String,Double>();
 			HashSet<String> allBooks = new HashSet<String>();//Set of all the combine books of the base Reviewer and compared Reviewer
-
-			allBooks.addAll(baseReviewer.ratings.keySet()); 			
-			double comparedReviewerMean = 0;
-			double rating;
+			allBooks.addAll(baseReviewer.ratings.keySet()); 
 			
+			String[] br = new String[2]; //temporary array to split books and ratings
+			double rating;
 			for(Text t : values)
 			{
 				br = t.toString().split(";");
 				rating = Double.parseDouble(br[1]);
-				comparedReviewer_bookAndRatings.put(br[0], rating);
-				comparedReviewerMean += rating;
+				comparedReviewer.ratings.put(br[0], rating);
+				comparedReviewer.ratingMeans += rating;
 				allBooks.add(br[0]);
 			}
-			comparedReviewerMean = comparedReviewerMean/comparedReviewer_bookAndRatings.size();
+			comparedReviewer.ratingMeans = comparedReviewer.ratingMeans/comparedReviewer.ratings.size();
 			
-			double normA =0;
-			double normB =0;
-			double dotProduct=0;
-			double vectorA;
-			double vectorB;
-			for(String b : allBooks)
-			{
-				vectorA = baseReviewer.ratings.getOrDefault(b, (float)0) - baseReviewer.ratingMeans;
-				vectorB = comparedReviewer_bookAndRatings.getOrDefault(b, (double)0) - comparedReviewerMean;
-				
-				dotProduct += vectorA * vectorB;
-				normA += Math.pow(vectorA,2);
-				normB += Math.pow(vectorB,2);
-			}
-
-			double cosineDistance = (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
-		
-			cosinSimilarityMap.put(comparedReviewer, cosineDistance);			
+			
+			
+			double similarity = Reviewer.calculateSimilarity(baseReviewer, comparedReviewer,allBooks);
+			similarityMap.put(comparedReviewer, similarity);			
 		}
 		
 		public void cleanup(Context context) throws IOException, InterruptedException
@@ -99,11 +79,11 @@ public class CosineDistance {
 				}
 			};
 				
-			Set<Entry<Reviewer, Double>> entries = cosinSimilarityMap.entrySet();
+			Set<Entry<Reviewer, Double>> entries = similarityMap.entrySet();
 			ArrayList<Entry<Reviewer, Double>> listOfEntries =  new ArrayList<Entry<Reviewer, Double>>(entries);
 			Collections.sort(listOfEntries, valueComparator);
 	
-			for(int i = 0; i < listOfEntries.size(); i++)
+			for(int i = 0; i < Reviewer.topXUser; i++)
 			{
 				Entry<Reviewer, Double> entry = listOfEntries.get(i);
 				String id = entry.getKey().id;
@@ -116,23 +96,28 @@ public class CosineDistance {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
+		
+		//Task: PEARSON, COSINE, JACCARD
+		Reviewer.Task task = Reviewer.Task.PEARSON;
+		
 		String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
 		String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
-
 		//String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//ALL-preprocessed";
 		//String 	fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
+				
+		Reviewer.DataPath = fileInput.substring(fileInput.indexOf("AmazonBookReview")+"AmazonBookReview//".length());//Used to find all the books of a given user
+		Reviewer.topXUser = 4;//Used in the cleanup to output the top X users	
+		baseReviewer = Reviewer.generateBaseReviewer("user1",task);//Creates our interested user
 		
 		Gson gson = new Gson();
-		baseReviewer = generateBaseReviewer("user1");
-		baseReviewer.calculateRatingMean();
-		
 		String ReviewerSerialization = gson.toJson(baseReviewer); //Serialize to pass to Reduce jobs	
+		
 		Configuration conf = new Configuration();
 		conf.set("Reviewer", ReviewerSerialization);
-		Job job = Job.getInstance(conf, "Cosine Similarity");
-		job.setJarByClass(CosineDistance.class);
-		job.setMapperClass(CosineAllPairsMapper.class);
-		job.setReducerClass(CosineTop10Users.class);
+		Job job = Job.getInstance(conf, "Distance Similarity");
+		job.setJarByClass(DistanceMeasurementMapper.class);
+		job.setMapperClass(AllPairsMapper.class);
+		job.setReducerClass(AllPairsReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
 
@@ -141,23 +126,6 @@ public class CosineDistance {
 		System.exit(job.waitForCompletion(true) ? 0 : 1);		
 	}
 	
-	public static Reviewer generateBaseReviewer(String id) throws IOException
-	{		
-		Reviewer Reviewer = new Reviewer(id);
-		File data = new File("Data/Sample");
-		BufferedReader br = new BufferedReader(new FileReader(data));
-		String line;
-		
-		while((line = br.readLine()) != null)
-		{
-			String[] tokens = line.split(",");
-			if(tokens[0].equals(Reviewer.id))
-			{
-				Reviewer.ratings.put(tokens[1], Float.parseFloat(tokens[2]));
-				System.out.println(tokens[1]);
-			}
-		}
-		return Reviewer;
-	}
+	
 }
 

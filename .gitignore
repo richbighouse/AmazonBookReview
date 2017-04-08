@@ -1,3 +1,4 @@
 Data/
 .classpath
 .settings
+*.class
