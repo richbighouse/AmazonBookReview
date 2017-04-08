@@ -75,7 +75,7 @@ public class JaccardSimilarityJobs {
 			
 			//Used to sort the HashMap by descending order
 			Comparator<Entry<Reviewer, Float>> valueComparator = new Comparator<Entry<Reviewer,Float>>() { 
-				@Override
+				
 				public int compare(Entry<Reviewer, Float> e1,Entry<Reviewer, Float> e2) {
 					float f1 = e1.getValue();
 					float f2 = e2.getValue();
@@ -114,7 +114,7 @@ public class JaccardSimilarityJobs {
 		Configuration conf = new Configuration();
 		conf.set("reviewer", reviewerSerialization);
 		Job job = Job.getInstance(conf, "Jaccard Similarity");
-		job.setJarByClass(JaccardSimilarity.class);
+		job.setJarByClass(JaccardSimilarityJobs.class);
 		job.setMapperClass(JaccardAllPairsMapper.class);
 		job.setReducerClass(JaccardTop10Users.class);
 		job.setOutputKeyClass(Text.class);
@@ -140,15 +140,5 @@ public class JaccardSimilarityJobs {
 			}
 		}
 		return reviewer;
-	}
-}
-
-class Reviewer {
-	public String id;
-	public HashMap<String, Float> ratings;
-
-	public Reviewer(String id){
-		this.id = id;
-		this.ratings = new HashMap<String, Float>();
 	}
 }
