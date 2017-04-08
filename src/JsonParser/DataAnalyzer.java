@@ -120,7 +120,6 @@ public class DataAnalyzer {
 	private LinkedHashMap<String, HashMap<String,Float>> orderReviewHashMap(HashMap<String, HashMap<String,Float>> hashMap){
 		LinkedHashMap<String, HashMap<String,Float>> ordered = new LinkedHashMap<String, HashMap<String,Float>>();	
 		Comparator<Entry<String, HashMap<String,Float>>> valueComparator = new Comparator<Entry<String, HashMap<String,Float>>>() { 
-			@Override
 			public int compare(Entry<String, HashMap<String,Float>> e1,Entry<String, HashMap<String,Float>> e2) {
 				int size1 = e1.getValue().size();
 				int size2 = e2.getValue().size();
