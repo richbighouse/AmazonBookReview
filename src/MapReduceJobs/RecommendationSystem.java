@@ -5,34 +5,23 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.join.TupleWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-
-import com.google.gson.Gson;
 
 public class RecommendationSystem {
 	
 	public static Reviewer baseReviewer;
-	public static HashMap<Reviewer, Double> topReviewers;
-	public static double totalSimilarity;
+	public static HashMap<String, Double> topReviewers;
 	
 	public static class RecommendationMapper extends Mapper<Object, Text, Text, Text> 
 	{
@@ -52,35 +41,38 @@ public class RecommendationSystem {
 		HashMap<String, ArrayList<Tuple<Double, Double>>> bookRatings = new HashMap<String, ArrayList<Tuple<Double, Double>>>();
 		//HashMap<bookId, HashMap<bookRating, similartiryRating>>
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException {
-				Double similarity = topReviewers.get(key);
-				
+				Double similarity = topReviewers.get(key.toString());			
 				for(Text value : values){
-					String[] tokens = values.toString().split(";"); //0 = bookId, 1 = bookRating
+					String[] tokens = value.toString().split(";"); //0 = bookId, 1 = bookRating
 					if(!bookRatings.containsKey(tokens[0])){
 						bookRatings.put(tokens[0], new ArrayList<>());
 					}
-					bookRatings.get(tokens[0]).add(new Tuple<Double,Double>(Double.parseDouble(tokens[1]), similarity));
+					ArrayList<Tuple<Double, Double>> listOfRatings = bookRatings.get(tokens[0]);
+					listOfRatings.add(new Tuple<Double,Double>(Double.parseDouble(tokens[1]), similarity));
 				}			
 		}
 		
 		public void cleanup(Context context) throws IOException, InterruptedException{
-			
 			double sum;
+			double totalSimilarity;
 			for(String book : bookRatings.keySet()){
 				sum = 0;
+				totalSimilarity = 0;
 				for(Tuple<Double, Double> ratings : bookRatings.get(book)){
-					sum += ratings.x * (ratings.y / totalSimilarity);
-				}
-				context.write(new Text(book), new DoubleWritable(sum));
+					sum += ratings.x * ratings.y;
+					totalSimilarity += ratings.y;
+				}				
+				context.write(new Text(book), new DoubleWritable(sum/totalSimilarity));
 			}		
 		}
 	}
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
-		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//ALL-preprocessed";
+		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//Sample";
 		String topNUsersInput = "/home//rich//dev//workspaces//java8//AmazonBookReview//Output//part-r-00000";
 		String fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//FinalOutput";
 		File outputFolder = new File("//home//rich//dev//workspaces//java8//AmazonBookReview//FinalOutput");
+		baseReviewer = new Reviewer("user1");
 				
 		if(outputFolder.exists())
 		{
@@ -91,20 +83,16 @@ public class RecommendationSystem {
 		BufferedReader br = new BufferedReader(new FileReader(data));
 		String line;
 		double temp;
-		topReviewers = new HashMap<Reviewer, Double>();
-		totalSimilarity = 0;
+		topReviewers = new HashMap<String, Double>();
 		while((line = br.readLine()) != null){		
 			String[] tokens = line.split("\\t");
 			temp = Double.valueOf(tokens[1]);
-			topReviewers.put(new Reviewer(tokens[0]), temp);
-			totalSimilarity += temp;
+			if(!tokens[0].equals(baseReviewer.id)){
+				topReviewers.put(tokens[0], temp);
+			}
 		}
 		
-		Gson gson = new Gson();
-		baseReviewer = new Reviewer("A1ZG43T5D0TILP");
-		//String reviewerSerialization = gson.toJson(baseReviewer); //Serialize to pass to Reduce jobs	
 		Configuration conf = new Configuration();
-		//conf.set("reviewer", reviewerSerialization);
 		Job secondJob = Job.getInstance(conf, "Recommendations");
 		secondJob.setJarByClass(RecommendationSystem.class);
 		secondJob.setMapperClass(RecommendationMapper.class);
@@ -114,24 +102,7 @@ public class RecommendationSystem {
 
 		FileInputFormat.addInputPath(secondJob, new Path(fileInput));
 		FileOutputFormat.setOutputPath(secondJob, new Path(fileOutput));
-		System.exit(secondJob.waitForCompletion(true) ? 0 : 1);
-		
-	}
-
-	public static Reviewer generateBaseReviewer(String id) throws IOException{		
-		Reviewer reviewer = new Reviewer(id);
-		File data = new File("Data/processedReview");
-		BufferedReader br = new BufferedReader(new FileReader(data));
-		String line;
-		
-		while((line = br.readLine()) != null){
-			String[] tokens = line.split(",");
-			if(tokens[0].equals(reviewer.id)){
-				reviewer.ratings.put(tokens[1], Double.parseDouble(tokens[2]));
-				System.out.println(tokens[1]);
-			}
-		}
-		return reviewer;
+		System.exit(secondJob.waitForCompletion(true) ? 0 : 1);		
 	}
 }
 

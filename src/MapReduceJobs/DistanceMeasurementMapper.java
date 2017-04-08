@@ -101,7 +101,7 @@ public class DistanceMeasurementMapper {
 
 		
 		//Task: PEARSON, COSINE, JACCARD
-		Reviewer.Task task = Reviewer.Task.JACCARD;
+		Reviewer.Task task = Reviewer.Task.COSINE;
 		
 		//String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
 		//String 	fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";

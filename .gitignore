@@ -1,8 +1,6 @@
 Data/
 .classpath
 .settings
-<<<<<<< HEAD
 Output/
-=======
->>>>>>> 62ab77ea1ec50760769df06daeeddc4b7cc11c08
+FinalOutput/
 *.class
