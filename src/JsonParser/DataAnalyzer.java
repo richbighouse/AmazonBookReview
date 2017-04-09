@@ -149,6 +149,10 @@ public class DataAnalyzer {
 			System.out.println("["+ entry.getKey()+"] : " + entry.getValue().size());
 		}	
 	}
+	
+	public void generateTestSet(){
+		
+	}
 		
 	public static void main(String[] args) throws IOException {
 		DataAnalyzer da = getInstance();	
@@ -159,28 +163,7 @@ public class DataAnalyzer {
 		while((line = br.readLine()) != null){		
 			String[] tokens = line.split(",");
 			da.updateAttributes(tokens);
-			/*double random = Math.random();
-			String toWrite;
-			double rating = Double.parseDouble(tokens[2]);
-			if(rating < 5.0 || (rating == 5.0 && random < 0.7)){
-				toWrite = tokens[0]+","+tokens[1]+","+tokens[2];
-			} else {
-				if(random >= 0.7 && random <= 0.79){
-					toWrite = tokens[0]+","+tokens[1]+","+"1.0";
-				} else if(random > 0.79 && random <= 0.88){
-					toWrite = tokens[0]+","+tokens[1]+","+"2.0";
-				} else if(random > 0.88 && random < 0.95){
-					toWrite = tokens[0]+","+tokens[1]+","+"3.0";
-				} else {
-					toWrite = tokens[0]+","+tokens[1]+","+"4.0";
-				}
-			}
-			fw.write(toWrite+"\n");*/		
 		}
-		//fw.close();
-		
-		//System.out.println("jobs done");
-		
 		
 		System.out.println("Number of reviews: " + da.numberOfReviews);
 		System.out.println("Number of reviewers: " + da.numberOfReviewers);
