@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import com.google.gson.Gson;
 public class DataAnalyzer {
 
 	private final String DATAPATH = "Data/ALL-preprocessed";
+	private final String NEWDATAPATH = "Data/modified-preprocessed";
 	private static DataAnalyzer da = null;
 	
 	private HashMap<String, HashMap<String,Float>> allBookReviewsPerReviewer;
@@ -150,13 +152,35 @@ public class DataAnalyzer {
 		
 	public static void main(String[] args) throws IOException {
 		DataAnalyzer da = getInstance();	
-		File data = new File(da.DATAPATH);
+		File data = new File(da.NEWDATAPATH);
+		/*FileWriter fw = new FileWriter(da.NEWDATAPATH, true);*/
 		BufferedReader br = new BufferedReader(new FileReader(data));
 		String line;		
 		while((line = br.readLine()) != null){		
 			String[] tokens = line.split(",");
 			da.updateAttributes(tokens);
+			/*double random = Math.random();
+			String toWrite;
+			double rating = Double.parseDouble(tokens[2]);
+			if(rating < 5.0 || (rating == 5.0 && random < 0.7)){
+				toWrite = tokens[0]+","+tokens[1]+","+tokens[2];
+			} else {
+				if(random >= 0.7 && random <= 0.79){
+					toWrite = tokens[0]+","+tokens[1]+","+"1.0";
+				} else if(random > 0.79 && random <= 0.88){
+					toWrite = tokens[0]+","+tokens[1]+","+"2.0";
+				} else if(random > 0.88 && random < 0.95){
+					toWrite = tokens[0]+","+tokens[1]+","+"3.0";
+				} else {
+					toWrite = tokens[0]+","+tokens[1]+","+"4.0";
+				}
+			}
+			fw.write(toWrite+"\n");*/		
 		}
+		//fw.close();
+		
+		//System.out.println("jobs done");
+		
 		
 		System.out.println("Number of reviews: " + da.numberOfReviews);
 		System.out.println("Number of reviewers: " + da.numberOfReviewers);
@@ -171,6 +195,7 @@ public class DataAnalyzer {
 		da.displayTopNFromOrdered(10, orderedReviewers);
 		da.displayTopNFromOrdered(10, orderedBooks);
 		da.displayRatingDistributionForReviewer("A21NVBFIEQWDSG");
+		
 	}
 
 }
