@@ -26,6 +26,7 @@ import com.google.gson.Gson;
 public class DistanceMeasurementMapper {
 
 	public static Reviewer baseReviewer;
+	public static Threshold threshold;
 
 	public static class AllPairsMapper extends Mapper<Object, Text, Text, Text> 
 	{
@@ -33,7 +34,21 @@ public class DistanceMeasurementMapper {
 		{
 			String[] tokens = values.toString().split(",");
 			//Writing user, book;rating
-			context.write(new Text(tokens[0]), new Text(tokens[1] +";"+tokens[2]));
+			
+			if(threshold.smallerThan)
+			{
+				if(Double.parseDouble(tokens[2].toString()) <= threshold.threshold)
+				{
+					context.write(new Text(tokens[0]), new Text(tokens[1] +";"+tokens[2]));
+				}
+			}
+			else
+			{
+				if(Double.parseDouble(tokens[2].toString()) >= threshold.threshold)
+				{
+					context.write(new Text(tokens[0]), new Text(tokens[1] +";"+tokens[2]));
+				}
+			}
 		}
 	}
 
@@ -97,6 +112,34 @@ public class DistanceMeasurementMapper {
 		}
 	}
 
+	public static void Execute (String fileInput, String fileOutput, Threshold thres, Reviewer reviewer) throws IOException
+	{
+		DistanceMeasurementMapper.threshold = thres;
+		baseReviewer = reviewer;
+		
+		File outputFolder = new File(fileOutput.replace("file:/",""));
+
+		if(outputFolder.exists())
+		{
+			FileUtils.deleteDirectory(outputFolder);
+		}
+		
+		Gson gson = new Gson();
+		String ReviewerSerialization = gson.toJson(baseReviewer); //Serialize to pass to Reduce jobs	
+
+		Configuration conf = new Configuration();
+		conf.set("Reviewer", ReviewerSerialization);
+		Job job = Job.getInstance(conf, "Distance Similarity");
+		job.setJarByClass(DistanceMeasurementMapper.class);
+		job.setMapperClass(AllPairsMapper.class);
+		job.setReducerClass(AllPairsReducer.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+
+		FileInputFormat.addInputPath(job, new Path(fileInput));
+		FileOutputFormat.setOutputPath(job, new Path(fileOutput));	
+	}
+	
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException 
 	{	
 		//Task: PEARSON, COSINE, JACCARD
@@ -113,6 +156,7 @@ public class DistanceMeasurementMapper {
 			FileUtils.deleteDirectory(outputFolder);
 		}	
 
+		
 
 		Reviewer.DataPath = fileInput.substring(fileInput.indexOf("AmazonBookReview")+"AmazonBookReview//".length());//Used to find all the books of a given user
 		Reviewer.topXUser = 4;//Used in the cleanup to output the top X users	
@@ -134,5 +178,7 @@ public class DistanceMeasurementMapper {
 		FileOutputFormat.setOutputPath(job, new Path(fileOutput));
 		System.exit(job.waitForCompletion(true) ? 0 : 1);		
 	}
+	
+	
 }
 

@@ -74,6 +74,47 @@ public class RecommendationSystem {
 		}
 	}
 
+	public static void Execute (String fileInput, String fileOutput, String topNUsersInput, Reviewer reviewer) throws IOException
+	{
+		baseReviewer = reviewer;
+		
+		File outputFolder = new File(fileOutput.replace("file://", ""));
+		
+		if(outputFolder.exists())
+		{
+			FileUtils.deleteDirectory(outputFolder);
+		}	
+		
+		File data = new File(topNUsersInput);
+		BufferedReader br = new BufferedReader(new FileReader(data));
+		String line;
+		double temp;
+		topReviewers = new HashMap<String, Double>();
+		
+		while((line = br.readLine()) != null)
+		{		
+			String[] tokens = line.split("\\t");
+			temp = Double.valueOf(tokens[1]);
+			if(!tokens[0].equals(baseReviewer.id))
+			{
+				topReviewers.put(tokens[0], temp);
+			}
+		}
+
+		Configuration conf = new Configuration();
+		Job secondJob = Job.getInstance(conf, "Recommendations");
+		secondJob.setJarByClass(RecommendationSystem.class);
+		secondJob.setMapperClass(RecommendationMapper.class);
+		secondJob.setReducerClass(RecommendationReducer.class);
+		secondJob.setOutputKeyClass(Text.class);
+		secondJob.setOutputValueClass(Text.class);
+
+		FileInputFormat.addInputPath(secondJob, new Path(fileInput));
+		FileOutputFormat.setOutputPath(secondJob, new Path(fileOutput));
+
+
+	}
+
 	public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException 
 	{
 		String interestedUser = "user1";
@@ -123,5 +164,7 @@ public class RecommendationSystem {
 		FileOutputFormat.setOutputPath(secondJob, new Path(fileOutput));
 		System.exit(secondJob.waitForCompletion(true) ? 0 : 1);		
 	}
+
 }
+
 
