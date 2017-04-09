@@ -74,7 +74,7 @@ public class RecommendationSystem {
 		}
 	}
 
-	public static void Execute (String fileInput, String fileOutput, String topNUsersInput, Reviewer reviewer) throws IOException
+	public static void Execute (String fileInput, String fileOutput, String topNUsersInput, Reviewer reviewer) throws IOException, ClassNotFoundException, InterruptedException
 	{
 		baseReviewer = reviewer;
 		
@@ -111,7 +111,7 @@ public class RecommendationSystem {
 
 		FileInputFormat.addInputPath(secondJob, new Path(fileInput));
 		FileOutputFormat.setOutputPath(secondJob, new Path(fileOutput));
-
+		secondJob.waitForCompletion(true);
 
 	}
 

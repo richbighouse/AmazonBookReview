@@ -6,6 +6,9 @@ import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 
+import JsonParser.TestSet;
+import JsonParser.TestUser;
+
 public class Program {
 /*This class serves as the entry point for all our tasks
  * 
@@ -14,15 +17,17 @@ public class Program {
 	/**
 	 * @param args
 	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) throws IOException 
+	public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException 
 	{
 		// TODO Auto-generated method stub
 		//Fetch Users
 		
-		String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//Sample";
+		String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//modified-preprocessed";
 		String fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
-		//String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//Sample";
+		//String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//modified-preprocessed";
 		//String fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
 
 		
@@ -48,26 +53,49 @@ public class Program {
 		
 		
 		//for user : users
-		for(Reviewer reviewer: reviewers)
-		{
+		ArrayList<TestUser> users = TestSet.deserializeTestUsers("Data/testusers.ser");
+		
+		Reviewer reviewer = null;
+		String fileOutputtemp;
+		for(TestUser user: users)
+		{	
+			fileOutputtemp = fileOutput;
+			System.out.println("Beginning tasks for user: " + user.id);
+			fileOutputtemp += ("_"+user.id + "//");
 			for(Reviewer.Task task: tasks)
 			{
-				fileOutput += task.toString();
+				reviewer = new Reviewer(user.id, task);
+				reviewer.topXUser = 20;
+				fileOutputtemp += task.toString();
+				
 				for(Threshold thres : thresholds)
 				{
-					fileOutput += ("_"+thres.threshold);
-					//Reviewer.topXUser = 4;
-					//		Reviewer.Task task = Reviewer.Task.COSINE;
-						//generateBaseReviewer ??
-					DistanceMeasurementMapper.Execute(fileInput, fileOutput, thres, reviewer);
-			
-					RecommendationSystem.Execute(fileInput, fileOutput+"_RS", fileOutput+"//part-r-00000", reviewer);
+					reviewer.ratings = TestSet.getSetWithThreshold(thres,user.baseSet);
+					reviewer.hiddenRatings = TestSet.getSetWithThreshold(thres,user.hiddenSet);
+					reviewer.calculateRatingMean();
+	
+					System.out.println("Beginning task "+ task.toString() + " threshold " + thres.threshold);
+					fileOutputtemp += ("_"+thres.threshold);
+
+					System.out.println("Distance Measurement start.");
+
+					DistanceMeasurementMapper.Execute(fileInput, fileOutputtemp, thres, reviewer);
 					
-					RootMeanSquareError.Execute(fileOutput+"_RS//part-r-00000", reviewer);
-					fileOutput.replace(("_"+thres.threshold), "");
+					System.out.println("Distance Measurement done.\n Recommendation system start.");
+					
+					RecommendationSystem.Execute(fileInput, fileOutputtemp+"_RS", fileOutputtemp.replace("file:", "")+"//part-r-00000", reviewer);
+					
+					System.out.println("Recommendation System done. \n Root mean square start.");
+					
+					RootMeanSquareError.Execute(fileOutputtemp.replace("file:", "")+"_RS//part-r-00000", reviewer);
+					
+					System.out.println("RMSE Done.\n\n\n");
+					
+					fileOutputtemp = fileOutputtemp.replace(("_"+thres.threshold), "");
 				}
-				fileOutput.replace(task.toString(), "");
+				fileOutputtemp = fileOutput.replace(task.toString(), "");
 			}
+			break;
 		}
 	}
 

@@ -11,6 +11,7 @@ public class Reviewer
 {
 	public String id;
 	public HashMap<String, Double> ratings;
+	public HashMap<String, Double> hiddenRatings;
 	public float ratingMeans = 0;
 	public Task task;
 	public static String DataPath = "";

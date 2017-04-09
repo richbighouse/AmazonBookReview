@@ -3,6 +3,10 @@ package JsonParser;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import org.apache.hadoop.io.Text;
+
+import MapReduceJobs.Threshold;
+
 public class TestUser implements Serializable {
 	
 	public String id;
@@ -28,4 +32,6 @@ public class TestUser implements Serializable {
 			}
 		}
 	}
+	
+	
 }

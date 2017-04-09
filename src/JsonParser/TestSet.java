@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import MapReduceJobs.Threshold;
+
 import com.google.gson.Gson;
 
 public class TestSet {
@@ -93,5 +95,33 @@ public class TestSet {
         fileIn.close();
         return testUserList;
 	}
+	
+	public static HashMap<String, Double> getSetWithThreshold(Threshold t,HashMap<String, Double> set)
+	{
+		double rating;
+		HashMap<String, Double> temp = new HashMap<String, Double>();
+		
+		for(String s : set.keySet())
+		{
+			rating = set.get(s);
+			if(t.smallerThan)
+			{
+				if(rating <= t.threshold)
+				{
+					temp.put(s, rating);
+				}
+			}
+			else
+			{
+				if(rating >= t.threshold)
+				{
+					temp.put(s, rating);
+				}
+			}
+		}
+		
+		return temp;
+	}
+	
 }
 

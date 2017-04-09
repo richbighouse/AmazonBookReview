@@ -112,7 +112,7 @@ public class DistanceMeasurementMapper {
 		}
 	}
 
-	public static void Execute (String fileInput, String fileOutput, Threshold thres, Reviewer reviewer) throws IOException
+	public static void Execute (String fileInput, String fileOutput, Threshold thres, Reviewer reviewer) throws IOException, ClassNotFoundException, InterruptedException
 	{
 		DistanceMeasurementMapper.threshold = thres;
 		baseReviewer = reviewer;
@@ -138,6 +138,7 @@ public class DistanceMeasurementMapper {
 
 		FileInputFormat.addInputPath(job, new Path(fileInput));
 		FileOutputFormat.setOutputPath(job, new Path(fileOutput));	
+		job.waitForCompletion(true);
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException 

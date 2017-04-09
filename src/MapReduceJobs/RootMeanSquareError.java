@@ -28,7 +28,7 @@ public class RootMeanSquareError {
 			estimatedRatings.put(tokens[0], Double.parseDouble(tokens[1]));
 		}
 		//changer ici pour mettre le hidden ratings
-		double rmse = getRMSE(reviewer.ratings, estimatedRatings);
+		double rmse = getRMSE(reviewer.hiddenRatings, estimatedRatings);
 	
 		try(FileWriter fw = new FileWriter("Data//RMSE", true);
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -77,9 +77,17 @@ public class RootMeanSquareError {
 		
 		for(String book : actualRatings.keySet())
 		{
-			double actualRating = actualRatings.get(book);
-			double estimatedRating = estimatedRatings.get(book);
-			rmseSum += Math.pow((estimatedRating - actualRating),2);		
+			if(estimatedRatings.containsKey(book))
+			{
+				double actualRating = actualRatings.get(book);
+				double estimatedRating = estimatedRatings.get(book);
+				rmseSum += Math.pow((estimatedRating - actualRating),2);		
+			}
+			else
+			{
+				double actualRating = actualRatings.get(book);
+				rmseSum += Math.pow((1 - actualRating),2);
+			}				
 		}
 		rmseSum = Math.sqrt(rmseSum);
 		return rmseSum;
