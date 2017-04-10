@@ -81,12 +81,14 @@ public class RootMeanSquareError {
 			{
 				double actualRating = actualRatings.get(book);
 				double estimatedRating = estimatedRatings.get(book);
-				rmseSum += Math.pow((estimatedRating - actualRating),2);		
+				if(actualRating != Double.NaN && estimatedRating != Double.NaN)
+					rmseSum += Math.pow((estimatedRating - actualRating),2);		
 			}
 			else
 			{
 				double actualRating = actualRatings.get(book);
-				rmseSum += Math.pow((1 - actualRating),2);
+				if(actualRating != Double.NaN)
+					rmseSum += Math.pow((1 - actualRating),2);
 			}				
 		}
 		rmseSum = Math.sqrt(rmseSum);
