@@ -129,7 +129,7 @@ public class Reviewer
 
 	public static double calculatePearsonSimilarity(Reviewer baseReviewer, Reviewer comparedReviewer, HashSet<String> allBooks)
 	{
-		double pearsonSimilarity = 0;
+		double pearsonSimilarity = -5;
 			
 		double normA =0;
 		double normB =0;
@@ -149,8 +149,9 @@ public class Reviewer
 				normB += Math.pow(vectorB,2);
 			}
 		}
-
-		pearsonSimilarity = (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
+		
+		if(dotProduct != 0)
+			pearsonSimilarity = (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
 		
 		return pearsonSimilarity;	
 	}

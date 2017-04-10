@@ -76,7 +76,7 @@ public class RecommendationSystem {
 
 	public static void Execute (String fileInput, String fileOutput, String topNUsersInput, Reviewer reviewer) throws IOException, ClassNotFoundException, InterruptedException
 	{
-		baseReviewer = reviewer;
+		baseReviewer = new Reviewer(reviewer.id);
 		
 		File outputFolder = new File(fileOutput.replace("file://", ""));
 		

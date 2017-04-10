@@ -21,6 +21,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import JsonParser.TestSet;
+
 import com.google.gson.Gson;
 
 public class DistanceMeasurementMapper {
@@ -34,19 +36,22 @@ public class DistanceMeasurementMapper {
 		{
 			String[] tokens = values.toString().split(",");
 			//Writing user, book;rating
-			
-			if(threshold.smallerThan)
-			{
-				if(Double.parseDouble(tokens[2].toString()) <= threshold.threshold)
+
+			if(!tokens[0].equals(baseReviewer.id)){
+
+				if(threshold.smallerThan)
 				{
-					context.write(new Text(tokens[0]), new Text(tokens[1] +";"+tokens[2]));
+					if(Double.parseDouble(tokens[2].toString()) <= threshold.threshold)
+					{
+						context.write(new Text(tokens[0]), new Text(tokens[1] +";"+tokens[2]));
+					}
 				}
-			}
-			else
-			{
-				if(Double.parseDouble(tokens[2].toString()) >= threshold.threshold)
+				else
 				{
-					context.write(new Text(tokens[0]), new Text(tokens[1] +";"+tokens[2]));
+					if(Double.parseDouble(tokens[2].toString()) >= threshold.threshold)
+					{
+						context.write(new Text(tokens[0]), new Text(tokens[1] +";"+tokens[2]));
+					}
 				}
 			}
 		}
@@ -73,9 +78,6 @@ public class DistanceMeasurementMapper {
 				allBooks.add(br[0]);
 			}
 			comparedReviewer.ratingMeans = comparedReviewer.ratingMeans/comparedReviewer.ratings.size();
-
-
-
 			double similarity = Reviewer.calculateSimilarity(baseReviewer, comparedReviewer,allBooks);
 			similarityMap.put(comparedReviewer, similarity);			
 		}
@@ -100,7 +102,9 @@ public class DistanceMeasurementMapper {
 					ArrayList<Entry<Reviewer, Double>> listOfEntries =  new ArrayList<Entry<Reviewer, Double>>(entries);
 					Collections.sort(listOfEntries, valueComparator);
 
-					for(int i = 0; i < Reviewer.topXUser; i++)
+					int end = (listOfEntries.size() > Reviewer.topXUser)? Reviewer.topXUser:listOfEntries.size();
+					
+					for(int i = 0; i < end; i++)
 					{
 						Entry<Reviewer, Double> entry = listOfEntries.get(i);
 						String id = entry.getKey().id;
@@ -116,6 +120,7 @@ public class DistanceMeasurementMapper {
 	{
 		DistanceMeasurementMapper.threshold = thres;
 		baseReviewer = reviewer;
+		baseReviewer.ratings = TestSet.getSetWithThreshold(thres,reviewer.ratings);
 		
 		File outputFolder = new File(fileOutput.replace("file:/",""));
 
@@ -123,7 +128,7 @@ public class DistanceMeasurementMapper {
 		{
 			FileUtils.deleteDirectory(outputFolder);
 		}
-		
+
 		Gson gson = new Gson();
 		String ReviewerSerialization = gson.toJson(baseReviewer); //Serialize to pass to Reduce jobs	
 
@@ -140,7 +145,7 @@ public class DistanceMeasurementMapper {
 		FileOutputFormat.setOutputPath(job, new Path(fileOutput));	
 		job.waitForCompletion(true);
 	}
-	
+
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException 
 	{	
 		//Task: PEARSON, COSINE, JACCARD
@@ -157,7 +162,7 @@ public class DistanceMeasurementMapper {
 			FileUtils.deleteDirectory(outputFolder);
 		}	
 
-		
+
 
 		Reviewer.DataPath = fileInput.substring(fileInput.indexOf("AmazonBookReview")+"AmazonBookReview//".length());//Used to find all the books of a given user
 		Reviewer.topXUser = 4;//Used in the cleanup to output the top X users	
@@ -179,7 +184,7 @@ public class DistanceMeasurementMapper {
 		FileOutputFormat.setOutputPath(job, new Path(fileOutput));
 		System.exit(job.waitForCompletion(true) ? 0 : 1);		
 	}
-	
-	
+
+
 }
 

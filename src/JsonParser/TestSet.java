@@ -24,10 +24,10 @@ public class TestSet {
 	public static HashMap<String, HashMap<String, Double>> allReviewers;
 	
 	public static void main(String[] args) throws IOException {
-		allReviewers = new HashMap<String, HashMap<String, Double>>();
+		allReviewers = new HashMap<String, HashMap<String, Double>>();		
 		testUsers = new ArrayList<TestUser>();
 		
-		/*String dataPath = "Data/modified-preprocessed";
+		String dataPath = "Data/preprocessed";
 		File data = new File(dataPath);
 		BufferedReader br = new BufferedReader(new FileReader(data));
 		String line;		
@@ -40,8 +40,8 @@ public class TestSet {
 			allReviewers.get(user).put(tokens[1], Double.parseDouble(tokens[2]));
 		}
 		
-		generateTestUsers(100);
-		serializeTestUsers();*/
+		generateTestUsers(50);
+		serializeTestUsers();
 		
 		try {
 			ArrayList<TestUser> deserialized = deserializeTestUsers("Data/testusers.ser");
@@ -57,12 +57,13 @@ public class TestSet {
 	
 	public static void generateTestUsers(int testSize) {
 		
+		Random random = new Random();
+		
 		for(int i = 0; i < testSize; i++){
-			Random random = new Random();
 			ArrayList<String> keys = new ArrayList<String>(allReviewers.keySet());
 			String randomKey = keys.get(random.nextInt(keys.size()));
 			HashMap<String, Double> value = allReviewers.get(randomKey);
-			if(value.size() > 9){
+			if(value.size() > 29 && value.size() < 150 && (value.containsValue(2.0) || value.containsValue(1.0))){
 				TestUser testUser = new TestUser(randomKey);
 				testUser.generateSets(value);
 				testUsers.add(testUser);
@@ -74,7 +75,7 @@ public class TestSet {
 	
 	public static void serializeTestUsers(){
 		try {
-            FileOutputStream fileOut = new FileOutputStream("Data/testusers.ser");
+            FileOutputStream fileOut = new FileOutputStream("Data/testusersoriginal.ser");
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
             out.writeObject(testUsers);
             out.close();
@@ -122,6 +123,5 @@ public class TestSet {
 		
 		return temp;
 	}
-	
 }
 

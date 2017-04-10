@@ -19,7 +19,7 @@ import com.google.gson.Gson;
 
 public class DataAnalyzer {
 
-	private final String DATAPATH = "Data/ALL-preprocessed";
+	private final String DATAPATH = "Data/preprocessed";
 	private final String NEWDATAPATH = "Data/modified-preprocessed";
 	private static DataAnalyzer da = null;
 	
@@ -156,7 +156,7 @@ public class DataAnalyzer {
 		
 	public static void main(String[] args) throws IOException {
 		DataAnalyzer da = getInstance();	
-		File data = new File(da.NEWDATAPATH);
+		File data = new File(da.DATAPATH);
 		/*FileWriter fw = new FileWriter(da.NEWDATAPATH, true);*/
 		BufferedReader br = new BufferedReader(new FileReader(data));
 		String line;		
@@ -177,7 +177,7 @@ public class DataAnalyzer {
 		LinkedHashMap<String, HashMap<String,Float>> orderedBooks = da.orderReviewHashMap(da.allReviewsPerBook);
 		da.displayTopNFromOrdered(10, orderedReviewers);
 		da.displayTopNFromOrdered(10, orderedBooks);
-		da.displayRatingDistributionForReviewer("A21NVBFIEQWDSG");
+		//da.displayRatingDistributionForReviewer("A1ISJK9AK9JIB1");
 		
 	}
 

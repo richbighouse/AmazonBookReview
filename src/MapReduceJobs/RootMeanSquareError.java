@@ -15,7 +15,7 @@ public class RootMeanSquareError {
 	public static HashMap<String, Double> actualRatings;
 	public static HashMap<String, Double> estimatedRatings;
 
-	public static void Execute(String fileRatings, Reviewer reviewer) throws NumberFormatException, IOException
+	public static void Execute(String fileRatings, Reviewer reviewer, String task, long startTime) throws NumberFormatException, IOException
 	{
 		estimatedRatings = new HashMap<String, Double>();
 		
@@ -34,7 +34,7 @@ public class RootMeanSquareError {
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter out = new PrintWriter(bw))
 				{
-			out.println("User: "+reviewer.id + "RMSE score: " + rmse);
+			out.println("User: "+reviewer.id +"\tTask: " + task + "\tRMSE score: " + rmse +" Execution time: " + (System.currentTimeMillis() - startTime)/1000);
 				} catch (IOException e) {
 				}
 	}
