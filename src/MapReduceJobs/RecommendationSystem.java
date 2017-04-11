@@ -5,7 +5,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -22,7 +26,7 @@ public class RecommendationSystem {
 
 	public static Reviewer baseReviewer;
 	public static HashMap<String, Double> topReviewers;
-
+	
 	public static class RecommendationMapper extends Mapper<Object, Text, Text, Text> 
 	{
 		public void map(Object key, Text values, Context context) throws IOException, InterruptedException 
@@ -60,6 +64,9 @@ public class RecommendationSystem {
 		{
 			double sum;
 			double totalSimilarity;
+			
+			ArrayList<Tuple<String, Double>> bookList = new ArrayList<Tuple<String,Double>>();
+			
 			for(String book : bookRatings.keySet())
 			{
 				sum = 0;
@@ -68,9 +75,18 @@ public class RecommendationSystem {
 				{
 					sum += ratings.x * ratings.y;
 					totalSimilarity += ratings.y;
-				}				
-				context.write(new Text(book), new DoubleWritable(sum/totalSimilarity));
-			}		
+				}
+				bookList.add(new Tuple<String,Double>(book,sum/totalSimilarity));
+				
+				
+			}	
+			
+			Collections.sort(bookList,new CustomComparator());
+			
+			for(Tuple<String,Double> t : bookList)
+			{
+				context.write(new Text(t.x), new DoubleWritable(t.y));		
+			}
 		}
 	}
 

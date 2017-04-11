@@ -91,6 +91,7 @@ public class RootMeanSquareError {
 					rmseSum += Math.pow((1 - actualRating),2);
 			}				
 		}
+		rmseSum = rmseSum / actualRatings.size();
 		rmseSum = Math.sqrt(rmseSum);
 		return rmseSum;
 	}

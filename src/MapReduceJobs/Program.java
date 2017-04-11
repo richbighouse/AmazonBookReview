@@ -25,11 +25,11 @@ public class Program {
 		// TODO Auto-generated method stub
 		//Fetch Users
 		
-		//String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//modified-preprocessed";
-		//String fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
+		String fileInput = "file:///home//epar//workspace//AmazonBookReview//Data//preprocessed";
+		String fileOutput = "file:///home//epar//workspace//AmazonBookReview//Data//Output";
 		//String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//modified-preprocessed";
-		String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//preprocessed";
-		String fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
+		//String fileInput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Data//preprocessed";
+		//String fileOutput = "file:///home//rich//dev//workspaces//java8//AmazonBookReview//Output";
 
 		ArrayList<Threshold> thresholds = new ArrayList<Threshold>(3)
 		{
@@ -76,7 +76,7 @@ public class Program {
 			new File("Data//RMSE").delete();
 		}
 		
-		//int i = 0;
+		int i = 0;
 		for(TestUser user: users)
 		{	/*
 			if(!user.id.equals("ALCC6SWW4WCXR")){
@@ -119,11 +119,11 @@ public class Program {
 				}
 				fileOutputtemp = fileOutputtemp.replace(task.toString(), "");
 			}
-			/*i++;
+			i++;
 			if(i== 1)
 			{
 				System.exit(0);
-			}*/
+			}
 		}
 	}
 
